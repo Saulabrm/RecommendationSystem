@@ -1,0 +1,9 @@
+name: ShinyRecommendation
+account: saulabrm
+server: shinyapps.io
+appId: 107228
+bundleId: 474296
+url: https://saulabrm.shinyapps.io/ShinyRecommendation/
+when: 1465300368.45683
+asMultiple: FALSE
+asStatic: FALSE

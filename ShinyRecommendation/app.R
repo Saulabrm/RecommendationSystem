@@ -1,5 +1,4 @@
-setwd("/Users/saulgarcia/Desktop/Github/RecommendationSystem")
-
+library(shiny)
 library(tidyr)
 library(data.table)
 library(stringr)
@@ -73,10 +72,10 @@ Recommendation <- function(Usersbook, df){
   }
 }
 
-
 ############  DATA ###########
 #Dataset of 5 books.
-bookIds = c(768, 1260, 888,1010,1020,1200,1300,1400,1500,1600,1800, 1700, 1900,1901,1902,1904:1908)
+bookIds = c(768, 1260, 888,1010,1020,1200,1300)
+#,1400,1500,1600,1800, 1700, 1900,1901,1902,1904:1908)
 books <- gutenberg_download(bookIds, meta_fields = "title")
 
 #List of books
@@ -84,7 +83,6 @@ books_list <- books %>% group_by(title) %>% distinct() %>% select(title)
 books_list
 
 #Preprocessing of text
-#library(plyr)
 books_df = books
 books_df$text <- clean_text(books$text)
 
@@ -105,13 +103,12 @@ books_df$Happiness <- cosine_distance(books_df$text,Emotions[3,2])
 books_df$Sadness <- cosine_distance(books_df$text,Emotions[4,2])
 books_df$ShameAndGuilt <- cosine_distance(books_df$text,Emotions[5,2])
 
-#detach(package:plyr)
 #Get the total distance for each title
 df <- books_df %>% group_by(title) %>% summarise("Anger" = sum(Anger), 
-                                           "Fear" = sum(Fear), 
-                                           "Happiness" = sum(Happiness), 
-                                           "Sadness" = sum(Sadness),
-                                          "Shame and Guilt" = sum(ShameAndGuilt))
+                                                 "Fear" = sum(Fear), 
+                                                 "Happiness" = sum(Happiness), 
+                                                 "Sadness" = sum(Sadness),
+                                                 "Shame and Guilt" = sum(ShameAndGuilt))
 
 #Get the name of the minimum distance of each emotion, this will represent the Emotion of the book.
 emotionTitle <- apply( as.data.frame(apply(df,1,which.min)) ,2,function(x){names(df)[x]})
@@ -119,13 +116,67 @@ emotionTitle <- apply( as.data.frame(apply(df,1,which.min)) ,2,function(x){names
 #Append The Emotion to the Book dataframe
 df$Emotion <- emotionTitle
 
-################# Recommendation System ##################
 
-#User choose a book: (Number from 1 - 11)
-booknum = sample(1:nrow(df), 1)
 
-#Get the title and emotion for the choosen book
-Userbook <- df[booknum,c(1,7)]
 
-#Print Recommendation  
-as.data.frame(Recommendation(Usersbook,df))
+########   USER INTERFACE   ############
+ui <- shinyUI(fluidPage(
+   
+   # Application title
+   titlePanel("Recommendation System"),
+   
+   # Sidebar with a slider input for number of bins 
+   sidebarLayout(
+      sidebarPanel(
+         selectInput("title",
+                     "Select your book to read:",
+                     c("Choose a book",sort(unique(sort(unique(books_list$title)))))
+         ),
+         submitButton("Read")
+      ),
+      
+      # Outputs the table of recommendations
+      mainPanel(
+        h4("Our Recommendations"),
+        
+        textOutput("text"),
+        tableOutput("recommendation")
+      )
+   )
+))
+
+########   SERVER   ############
+server <- shinyServer(function(input, output) {
+   
+  #Tells the Chosen Book and Emotion, in order to recommend 
+  output$text = renderText({
+    if(input$title == "Choose a book"){
+        paste("Please choose a book")
+    } else{
+        paste("Because you read our book: " ,input$title, ", which belong to the category: ", df[df$title==input$title,7],
+            "; We thought you may like one of the following:",
+            sep = "", collapse = NULL) 
+    }
+   
+   
+  })
+  
+  
+  #Process the table for recommendation
+   output$recommendation = renderTable({
+     if(input$title == "Choose a book"){
+        data.frame()
+     } else{
+        #Get the title and emotion for the choosen book
+        Userbook <- df[df$title==input$title,c(1,7)]
+        #Print Recommendation  
+        as.data.frame(Recommendation(Usersbook,df))
+     }
+     
+     
+   })
+})
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+
