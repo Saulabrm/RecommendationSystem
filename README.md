@@ -1,6 +1,6 @@
 # Recommendation System
 
-Recommendation System for Text Mining Course by using the RGutenberg library
+Recommendation System for Text Mining Course by using the `RGutenberg` library
 
 The objective of this work is to classify the books into one of the following categories: *Anger, Happiness, Fear, Sadness, Shame and Guilt* These categories were chosen by using the [Karla Mclaren](http://karlamclaren.com/emotional-vocabulary-page/) list of emotions, to further built a dictionary to use as a bag of words .
 
